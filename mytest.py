@@ -42,86 +42,83 @@ def _(df, pd):
             "ResolvedByIdentity": "ResolvedBy",
             "AssignedFolderLabel":"AssignFoldLab",
             "CreateDate":"Created",
-            "LastUpdatedDate":"LastUpdated"
+            "LastUpdatedDate":"Updated"
         },
         inplace=True,
     )
 
     # change the date columns from strings to datetimes so we can use the datetime methods on them
     df["Created"] = pd.to_datetime(df.Created, format="%m/%d/%y %H:%M")
-    df["LastUpdated"] = pd.to_datetime(df.LastUpdated, format="%m/%d/%y %H:%M")
+    df["Updated"] = pd.to_datetime(df.Updated, format="%m/%d/%y %H:%M")
     return
 
 
 @app.cell
-def _(infile, mo):
+def _(df, mo):
+    # create some sidebar selection ui controls
+
+    # create a dropdown of assignees included in the infile to allow the dataframe
+    # to be filtered by any one of the assignees.
+    assignee_select = mo.ui.dropdown.from_series(
+        df["Assignee"], label="Filter By Assignee"
+    )
+
+    # create radio group of viewer options
+    radiogroup = mo.ui.radio(
+        options=["Table", "Transformer", "Explorer"], value="Table", label="Choose Data Viewer"
+    )
+    return assignee_select, radiogroup
+
+
+@app.cell
+def _(assignee_select, infile, mo, radiogroup):
+    # create the sidebar view to show info that can be collapsed
+    # out of the way to make more screen real estate for the tables
     mo.sidebar(
         [
-            mo.md("##Explorer Info"),
-            mo.md(f"infile:{infile}")
+            mo.vstack(
+            [
+                mo.md("##Explorer Info"),
+                mo.md("~~~~~"),
+                mo.md(f"infile {infile}"),
+                mo.md("~~~~~"),
+                assignee_select,
+                mo.md("~~~~~"),
+                radiogroup,
+            ])
         ]
     )
     return
 
 
 @app.cell
-def _(mo):
-    mo.md("""#Dataframe View of Cleaned Up Data""")
-    return
+def _(assignee_select, df):
+    # If assignee filter in sidebar has assignee selected, filter table
+    # data by that assignee, otherwise show all records (--).
+    if assignee_select.value is None:
+        filtered_df = df
+    else:
+        filtered_df = df[df["Assignee"] == assignee_select.value]
+    return (filtered_df,)
 
 
 @app.cell
-def _(df):
-    # show the dataframe in a rich table
-    df
-    return
+def _(filtered_df, mo, radiogroup):
+    # Determine how to show the data based upon the built-in marimo views available.
+    if radiogroup.value == "Table":
+        showme = mo.ui.table(filtered_df)
+    elif radiogroup.value == "Transformer":
+        showme = mo.ui.dataframe(filtered_df)
+    elif radiogroup.value == "Explorer":
+        showme = mo.ui.data_explorer(filtered_df)
+    else:
+        print("Unknown viewer selection error")
+    return (showme,)
 
 
 @app.cell
-def _(mo):
-    mo.md(r"""#Data By Assignee""")
-    return
-
-
-@app.cell
-def _(df, mo):
-    assignee_select = mo.ui.dropdown.from_series(
-        df["Assignee"], label="Assignee"
-    )
-    mo.hstack([mo.md("Filter Dataframe By:"),assignee_select,mo.md("Note: You can actually filter any/all columns in the dataframe view above by clicking on the column header and choosing filter. This is just here to make it quicker.")],justify="start")
-    return (assignee_select,)
-
-
-@app.cell
-def _(assignee_select, df, mo):
-    filtered_df = df[df["Assignee"] == assignee_select.value]
-    mo.ui.table(filtered_df)
-    return
-
-
-@app.cell
-def _(mo):
-    mo.md(r"""#Transform View of Datafame""")
-    return
-
-
-@app.cell
-def _(df, mo):
-    transformed_df = mo.ui.dataframe(df)
-    transformed_df
-    return
-
-
-@app.cell
-def _(mo):
-    mo.md(r"""#Explorer View of Datafame""")
-    return
-
-
-@app.cell
-def _(df, mo):
-    explored_df = mo.ui.data_explorer(df)
-    explored_df
+def _(showme):
+    showme
     return
 
 
