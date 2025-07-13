@@ -8,8 +8,9 @@ app = marimo.App(width="full", app_title="SIM Ticket Explorer")
 def _():
     import marimo as mo
     import pandas as pd
-    from datetime import datetime,date,time
+    from datetime import datetime, date, time
     from dateutil.relativedelta import relativedelta
+
     return date, datetime, mo, pd, relativedelta, time
 
 
@@ -30,11 +31,6 @@ def _(mo, pd):
 
 
 @app.cell
-def _():
-    return
-
-
-@app.cell
 def _(df, pd):
     # clean up the data before we use it
 
@@ -46,9 +42,9 @@ def _(df, pd):
             "RequesterIdentity": "Requester",
             "SubmitterIdentity": "Submitter",
             "ResolvedByIdentity": "ResolvedBy",
-            "AssignedFolderLabel":"AssignFoldLab",
-            "CreateDate":"Created",
-            "LastUpdatedDate":"Updated"
+            "AssignedFolderLabel": "AssignFoldLab",
+            "CreateDate": "Created",
+            "LastUpdatedDate": "Updated",
         },
         inplace=True,
     )
@@ -74,7 +70,9 @@ def _(date, df, mo, relativedelta):
 
     # create radio group of viewer options
     radiogroup = mo.ui.radio(
-        options=["Table", "Transformer", "Explorer"], value="Table", label="Choose Data Viewer"
+        options=["Table", "Transformer", "Explorer"],
+        value="Table",
+        label="Choose Data Viewer",
     )
 
     # create checkbox to determine if created dates will be filtered
@@ -85,7 +83,7 @@ def _(date, df, mo, relativedelta):
     month_ago = tomorrow + relativedelta(months=-1)
 
     # create date vars
-    filter_create_start_date = mo.ui.date(label="Start Created",value=month_ago)
+    filter_create_start_date = mo.ui.date(label="Start Created", value=month_ago)
     filter_create_end_date = mo.ui.date(label="End Created", value=tomorrow)
     return (
         assignee_select,
@@ -121,28 +119,35 @@ def _(
     mo.sidebar(
         [
             mo.vstack(
-            [
-                mo.vstack(
-                    [mo.md("#Analysis Info")],
-                ),
-                mo.vstack([    
-                    mo.md("##Infile Info"),
-                    mo.md(f"{infile=}"),
-                    mo.md(f"Min Created: {min_created}"),
-                    mo.md(f"Max Created: {max_created}"),
-                ]),
-                mo.vstack([
-                    mo.md("##Filter Options"),
-                    filter_by_created,
-                    filter_create_start_date,
-                    filter_create_end_date,
-                    assignee_select,
-                ]),
-                mo.vstack([
-                    mo.md("##Data View Options"),
-                    radiogroup,
-                ])
-            ])
+                [
+                    mo.vstack(
+                        [mo.md("#Analysis Info")],
+                    ),
+                    mo.vstack(
+                        [
+                            mo.md("##Infile Info"),
+                            mo.md(f"{infile=}"),
+                            mo.md(f"Min Created: {min_created}"),
+                            mo.md(f"Max Created: {max_created}"),
+                        ]
+                    ),
+                    mo.vstack(
+                        [
+                            mo.md("##Filter Options"),
+                            filter_by_created,
+                            filter_create_start_date,
+                            filter_create_end_date,
+                            assignee_select,
+                        ]
+                    ),
+                    mo.vstack(
+                        [
+                            mo.md("##Data View Options"),
+                            radiogroup,
+                        ]
+                    ),
+                ]
+            )
         ]
     )
     return
@@ -163,18 +168,30 @@ def _(
     if assignee_select.value is None:
         if filter_by_created.value:
             filtered_df = df[
-                (df["Created"] >= datetime.combine(filter_create_start_date.value,time.min))
-                & (df["Created"] <= datetime.combine(filter_create_end_date.value,time.max))
-                ]
+                (
+                    df["Created"]
+                    >= datetime.combine(filter_create_start_date.value, time.min)
+                )
+                & (
+                    df["Created"]
+                    <= datetime.combine(filter_create_end_date.value, time.max)
+                )
+            ]
         else:
             filtered_df = df
     else:
         if filter_by_created.value:
             filtered_df = df[
                 (df["Assignee"] == assignee_select.value)
-                & (df["Created"] >= datetime.combine(filter_create_start_date.value,time.min))
-                & (df["Created"] <= datetime.combine(filter_create_end_date.value,time.max))
-                ]
+                & (
+                    df["Created"]
+                    >= datetime.combine(filter_create_start_date.value, time.min)
+                )
+                & (
+                    df["Created"]
+                    <= datetime.combine(filter_create_end_date.value, time.max)
+                )
+            ]
         else:
             filtered_df = df[df["Assignee"] == assignee_select.value]
 
@@ -190,8 +207,7 @@ def _(filtered_df, mo, radiogroup):
         showme = mo.ui.dataframe(filtered_df)
     elif radiogroup.value == "Explorer":
         showme = mo.ui.data_explorer(filtered_df)
-    else:
-        print("Unknown viewer selection error")
+
     return (showme,)
 
 
@@ -217,14 +233,13 @@ def _(
     def get_created_filter_card_display():
         if filter_by_created.value:
             return f"{filter_create_start_date.value} - {filter_create_end_date.value}"
-        else:
-            return "Not Filtering"
+        return "Not Filtering"
 
     def get_assignee_filter_card_display():
         if assignee_select.value is None:
             return "--"
-        else:
-            return assignee_select.value
+        return assignee_select.value
+
     return (
         get_assignee_filter_card_display,
         get_created_filter_card_display,
@@ -243,7 +258,7 @@ def _(
     num_rows,
     show_cards,
 ):
-    mo.stop(show_cards == False)
+    mo.stop(not show_cards)
 
     _cards = [
         mo.stat(
@@ -268,7 +283,7 @@ def _(
         ),
     ]
 
-    _title = f"### Quick Info Cards"
+    _title = "### Quick Info Cards"
 
     mo.vstack(
         [
