@@ -62,6 +62,7 @@ In `dev` directory (check with `pwd`), run these commands:
 
 ```
 git clone https://github.com/cwkingjr/marimotest.git
+ls
 cd marimotest
 ls
 ```
@@ -81,7 +82,7 @@ Marimo offers edit and run modes. Run is for finished projects and edit is for w
 From inside the marimotest dir, run:
 
 ```
-uv run marimo edit ./mytest.py -- --infile fake-data-3000-rows.csv
+uv run marimo edit ./mytest.py -- --infile ./fake-data-3000-rows.csv
 ```
 
 To explain the above, I will break down some parts. We're using uv to manage Python, dependencies, and virtual environments here. Instead of worrying about learning all about Python installation and packaging and setting up virtual environments, uv will use the info in the local repo's files to download and install the version of python needed, all python dependency packages needed by this project, installed within a virtual environment inside this project (under the dir .venv) so these dependencies don't interfere with any other project's dependency needs/versions. Because of that, we launch projects using uv also, but using a different subcommand (run instead of sync).
@@ -94,7 +95,7 @@ Here is what the parts do of that long command line invocation do:
 
 `--` tells `uv run` that any arguments after this are not for `uv run` and need to get passed on to `marimo run` for processing.
 
-`--infile fake-data-3000-rows.csv` becomes an argument passed into the Python environment that is running the mytest.py file, where I use code to find out what the file path passed in was and display that in the left sidebar and use that path to load the CSV data.
+`--infile ./fake-data-3000-rows.csv` becomes an argument passed into the Python environment that is running the mytest.py file, where I use code to find out what the file path passed in was and display that in the left sidebar and use that path to load the CSV data.
 
 ### Run via uv run in Marimo run mode
 
@@ -103,13 +104,13 @@ In the marimotest directory, run the project in either run or edit mode. I'd rec
 Run
 
 ```
-uv run marimo run ./mytest.py -- --infile fake-data-3000-rows.csv
+uv run marimo run ./mytest.py -- --infile ./fake-data-3000-rows.csv
 ```
 
 Edit
 
 ```
-uv run marimo edit ./mytest.py -- --infile fake-data-3000-rows.csv
+uv run marimo edit ./mytest.py -- --infile ./fake-data-3000-rows.csv
 ```
 
 This will open you web browser to a local file and start showing the data. Meanwhile, the Terminal will be blocked. When you are ready to stop using the app, go to the terminal and hit Control-C to kill the uv marimo process. Then just close your browser tab.
