@@ -10,6 +10,7 @@ def _():
     import pandas as pd
     from datetime import datetime, date, time
     from dateutil.relativedelta import relativedelta
+    import altair as alt
 
     return date, datetime, mo, pd, relativedelta, time
 
@@ -297,6 +298,86 @@ def _(
 @app.cell
 def _(showme):
     showme
+    return
+
+
+@app.cell
+def _(filtered_df, mo):
+    # Note/TODO this probably shouldn't be filtered by assignee since they don't create tickets
+    # perhaps just filter by date range but not assignee to keep folks from assuming there's a link
+    # between assignee and created. Can just not select assignee in filter, but still might be confusing.
+    # Group by monthly period and count
+    monthly_created = filtered_df.groupby(filtered_df["Created"].dt.to_period('M')).size()
+    mo.stop(monthly_created.empty)
+    monthly_created_plot = monthly_created.plot(title="Tickets Created Per Month", kind="bar", grid=True, xlabel="Year-Month", ylabel="Count")
+    mo.hstack([monthly_created_plot,monthly_created],justify="start")
+    return
+
+
+@app.cell
+def _(
+    assignee_select,
+    datetime,
+    df,
+    filter_by_created,
+    filter_create_end_date,
+    filter_create_start_date,
+    time,
+):
+    # Monthly resolved
+    # If assignee filter in sidebar has assignee selected, filter ResolvedBY
+    # data by that assignee, otherwise show all records (--).
+    if assignee_select.value is None:
+        if filter_by_created.value:
+            resolved_df = df[
+                (
+                    df["Updated"]
+                    >= datetime.combine(filter_create_start_date.value, time.min)
+                )
+                & (
+                    df["Updated"]
+                    <= datetime.combine(filter_create_end_date.value, time.max)
+                )
+            ]
+        else:
+            resolved_df = df
+    else:
+        if filter_by_created.value:
+            resolved_df = df[
+                (df["ResolvedBy"] == assignee_select.value)
+                & (
+                    df["Updated"]
+                    >= datetime.combine(filter_create_start_date.value, time.min)
+                )
+                & (
+                    df["Updated"]
+                    <= datetime.combine(filter_create_end_date.value, time.max)
+                )
+            ]
+        else:
+            resolved_df = df[df["ResolvedBy"] == assignee_select.value]
+
+    return (resolved_df,)
+
+
+@app.cell
+def _(assignee_select, mo, resolved_df):
+    # using assignee values to pull from ResolvedBy col
+    monthly_resolved = resolved_df.groupby(resolved_df["Updated"].dt.to_period('M')).size()
+    mo.stop(monthly_resolved.empty)
+    monthly_resolved
+    if assignee_select.value is None:
+        monthly_created_plot_title = "Tickets Resolved Per Month (All)"
+    else:
+        monthly_created_plot_title = f"Tickets Resolved Per Month ({assignee_select.value})"
+    monthly_resolved_plot = monthly_resolved.plot(title=monthly_created_plot_title, kind="bar", grid=True, xlabel="Year-Month", ylabel="Count")
+    monthly_created_plot_note = mo.md("#### Note: Resolved by Months uses the Created Filter Options for date range selection, but derives ticket counts via the Updated column assuming the ticket was resolved during the last update.")
+    mo.vstack(
+        [
+            monthly_created_plot_note,
+            mo.hstack([monthly_resolved_plot,monthly_resolved],justify="start")
+        ])
+
     return
 
 
