@@ -11,7 +11,6 @@ def _():
     from datetime import datetime, date, time
     from dateutil.relativedelta import relativedelta
     import altair as alt
-
     return date, datetime, mo, pd, relativedelta, time
 
 
@@ -27,7 +26,6 @@ def _(mo, pd):
 
     # TODO determine if we will accept either csv or xlsx and if they will have the same schemas
     # assuming it would be fine to allow either so alternate fieldset can be consumed
-
     return df, infile
 
 
@@ -61,37 +59,44 @@ def _(df, pd):
 
 @app.cell
 def _(date, df, mo, relativedelta):
-    # create some sidebar selection ui controls
+    # create some ui elements for use in other cells. You can't use these from the same cell you create them in.
 
-    # create a dropdown of assignees included in the infile to allow the dataframe
-    # to be filtered by any one of the assignees.
-    assignee_select = mo.ui.dropdown.from_series(
+    dropdown_assignee_select = mo.ui.dropdown.from_series(
         df["Assignee"], label="Filter By Assignee"
     )
 
-    # create radio group of viewer options
-    radiogroup = mo.ui.radio(
+    dropdown_resolvedby_select = mo.ui.dropdown.from_series(
+        df["ResolvedBy"], label="Filter By ResolvedBy"
+    )
+
+    radio_data_viewer_choice = mo.ui.radio(
         options=["Table", "Transformer", "Explorer"],
         value="Table",
         label="Choose Data Viewer",
     )
 
-    # create checkbox to determine if created dates will be filtered
-    filter_by_created = mo.ui.checkbox(label="Filter By Created Date")
+    checkbox_filter_by_created = mo.ui.checkbox(label="Filter By Created Date")
+    checkbox_filter_by_updated = mo.ui.checkbox(label="Filter By Updated Date")
 
-    # determine start and end selections
-    tomorrow = date.today() + relativedelta(days=1)
-    month_ago = tomorrow + relativedelta(months=-1)
+    # grab current dates to use as default value for start and end date values
+    pydate_tomorrow = date.today() + relativedelta(days=1)
+    pydate_month_ago = pydate_tomorrow + relativedelta(months=-1)
 
-    # create date vars
-    filter_create_start_date = mo.ui.date(label="Start Created", value=month_ago)
-    filter_create_end_date = mo.ui.date(label="End Created", value=tomorrow)
+    date_created_start = mo.ui.date(label="Start Created", value=pydate_month_ago)
+    date_created_end = mo.ui.date(label="End Created", value=pydate_tomorrow)
+
+    date_updated_start = mo.ui.date(label="Start Updated", value=pydate_month_ago)
+    date_updated_end = mo.ui.date(label="End Updated", value=pydate_tomorrow)
     return (
-        assignee_select,
-        filter_by_created,
-        filter_create_end_date,
-        filter_create_start_date,
-        radiogroup,
+        checkbox_filter_by_created,
+        checkbox_filter_by_updated,
+        date_created_end,
+        date_created_start,
+        date_updated_end,
+        date_updated_start,
+        dropdown_assignee_select,
+        dropdown_resolvedby_select,
+        radio_data_viewer_choice,
     )
 
 
@@ -100,20 +105,23 @@ def _(df):
     # gather some status info
     min_created = min(df["Created"])
     max_created = max(df["Created"])
-    return max_created, min_created
+
+    min_updated = min(df["Updated"])
+    max_updated = max(df["Updated"])
+    return max_created, max_updated, min_created, min_updated
 
 
 @app.cell
 def _(
-    assignee_select,
-    filter_by_created,
-    filter_create_end_date,
-    filter_create_start_date,
+    checkbox_filter_by_created,
+    date_created_end,
+    date_created_start,
+    dropdown_assignee_select,
     infile,
     max_created,
     min_created,
     mo,
-    radiogroup,
+    radio_data_viewer_choice,
 ):
     # create the sidebar view to show info that can be collapsed
     # out of the way to make more screen real estate for the tables
@@ -135,16 +143,16 @@ def _(
                     mo.vstack(
                         [
                             mo.md("##Filter Options"),
-                            filter_by_created,
-                            filter_create_start_date,
-                            filter_create_end_date,
-                            assignee_select,
+                            checkbox_filter_by_created,
+                            date_created_start,
+                            date_created_end,
+                            dropdown_assignee_select,
                         ]
                     ),
                     mo.vstack(
                         [
                             mo.md("##Data View Options"),
-                            radiogroup,
+                            radio_data_viewer_choice,
                         ]
                     ),
                 ]
@@ -156,97 +164,87 @@ def _(
 
 @app.cell
 def _(
-    assignee_select,
+    checkbox_filter_by_created,
+    date_created_end,
+    date_created_start,
     datetime,
     df,
-    filter_by_created,
-    filter_create_end_date,
-    filter_create_start_date,
+    dropdown_assignee_select,
     time,
 ):
     # If assignee filter in sidebar has assignee selected, filter table
     # data by that assignee, otherwise show all records (--).
-    if assignee_select.value is None:
-        if filter_by_created.value:
+    if dropdown_assignee_select.value is None:
+        if checkbox_filter_by_created.value:
             filtered_df = df[
                 (
                     df["Created"]
-                    >= datetime.combine(filter_create_start_date.value, time.min)
+                    >= datetime.combine(date_created_start.value, time.min)
                 )
                 & (
                     df["Created"]
-                    <= datetime.combine(filter_create_end_date.value, time.max)
+                    <= datetime.combine(date_created_end.value, time.max)
                 )
             ]
         else:
             filtered_df = df
     else:
-        if filter_by_created.value:
+        if checkbox_filter_by_created.value:
             filtered_df = df[
-                (df["Assignee"] == assignee_select.value)
+                (df["Assignee"] == dropdown_assignee_select.value)
                 & (
                     df["Created"]
-                    >= datetime.combine(filter_create_start_date.value, time.min)
+                    >= datetime.combine(date_created_start.value, time.min)
                 )
                 & (
                     df["Created"]
-                    <= datetime.combine(filter_create_end_date.value, time.max)
+                    <= datetime.combine(date_created_end.value, time.max)
                 )
             ]
         else:
-            filtered_df = df[df["Assignee"] == assignee_select.value]
-
+            filtered_df = df[df["Assignee"] == dropdown_assignee_select.value]
     return (filtered_df,)
 
 
 @app.cell
-def _(filtered_df, mo, radiogroup):
+def _(filtered_df, mo, radio_data_viewer_choice, radiogroup):
     # Determine how to show the data based upon the built-in marimo views available.
-    if radiogroup.value == "Table":
-        showme = mo.ui.table(filtered_df)
+    if radio_data_viewer_choice.value == "Table":
+        viewer = mo.ui.table(filtered_df)
     elif radiogroup.value == "Transformer":
-        showme = mo.ui.dataframe(filtered_df)
+        viewer = mo.ui.dataframe(filtered_df)
     elif radiogroup.value == "Explorer":
-        showme = mo.ui.data_explorer(filtered_df)
-
-    return (showme,)
+        viewer = mo.ui.data_explorer(filtered_df)
+    return (viewer,)
 
 
 @app.cell
 def _(
-    assignee_select,
-    filter_by_created,
-    filter_create_end_date,
-    filter_create_start_date,
-    pd,
-    showme,
+    checkbox_filter_by_created,
+    date_created_end,
+    date_created_start,
+    dropdown_assignee_select,
+    filtered_df,
 ):
     # gather up some data status to show in cards
 
-    # the transformer and explorer raise errors so restricting to dataframe for now
-    if type(showme) is pd.DataFrame:
-        num_rows = len(showme)
-        num_cols = len(showme.columns)
-        show_cards = True
-    else:
-        show_cards = False
+    num_rows = len(filtered_df)
+    num_cols = len(filtered_df.columns)
 
     def get_created_filter_card_display():
-        if filter_by_created.value:
-            return f"{filter_create_start_date.value} - {filter_create_end_date.value}"
+        if checkbox_filter_by_created.value:
+            return f"{date_created_start.value} - {date_created_end.value}"
         return "Not Filtering"
 
     def get_assignee_filter_card_display():
-        if assignee_select.value is None:
+        if dropdown_assignee_select.value is None:
             return "--"
-        return assignee_select.value
-
+        return dropdown_assignee_select.value
     return (
         get_assignee_filter_card_display,
         get_created_filter_card_display,
         num_cols,
         num_rows,
-        show_cards,
     )
 
 
@@ -257,10 +255,7 @@ def _(
     mo,
     num_cols,
     num_rows,
-    show_cards,
 ):
-    mo.stop(not show_cards)
-
     _cards = [
         mo.stat(
             label="Rows",
@@ -284,7 +279,7 @@ def _(
         ),
     ]
 
-    _title = "### Quick Info Cards"
+    _title = "### Quick Info Cards for Table Viewer"
 
     mo.vstack(
         [
@@ -296,88 +291,132 @@ def _(
 
 
 @app.cell
-def _(showme):
-    showme
-    return
-
-
-@app.cell
-def _(filtered_df, mo):
-    # Note/TODO this probably shouldn't be filtered by assignee since they don't create tickets
-    # perhaps just filter by date range but not assignee to keep folks from assuming there's a link
-    # between assignee and created. Can just not select assignee in filter, but still might be confusing.
-    # Group by monthly period and count
-    monthly_created = filtered_df.groupby(filtered_df["Created"].dt.to_period('M')).size()
-    mo.stop(monthly_created.empty)
-    monthly_created_plot = monthly_created.plot(title="Tickets Created Per Month", kind="bar", grid=True, xlabel="Year-Month", ylabel="Count")
-    mo.hstack([monthly_created_plot,monthly_created],justify="start")
+def _(viewer):
+    viewer
     return
 
 
 @app.cell
 def _(
-    assignee_select,
+    checkbox_filter_by_created,
+    date_created_end,
+    date_created_start,
     datetime,
     df,
-    filter_by_created,
-    filter_create_end_date,
-    filter_create_start_date,
+    mo,
+    time,
+):
+    # Not using filtered_df here because it is also filtered by assignee selection
+    if checkbox_filter_by_created.value:
+        created_df = df[
+                (df["Created"] >= datetime.combine(date_created_start.value, time.min))
+                & (df["Created"] <= datetime.combine(date_created_end.value, time.max))
+            ]
+        monthly_created_plot_header = mo.md(f"###Monthly Created Ticket Count - {date_created_start.value} - {date_created_end.value}")
+    else:
+        created_df = df
+        monthly_created_plot_header = mo.md(f"###Monthly Created Ticket Count - All")
+    return created_df, monthly_created_plot_header
+
+
+@app.cell
+def _(created_df, mo, monthly_created_plot_header):
+    monthly_created = created_df.groupby(created_df["Created"].dt.to_period('M')).size()
+    mo.stop(monthly_created.empty)
+
+    monthly_created_plot = monthly_created.plot(title="Tickets Created Per Month", kind="bar", grid=True, xlabel="Year-Month", ylabel="Count")
+    mo.vstack(
+        [
+        mo.md("~~~~~~~~~~"),
+        monthly_created_plot_header,
+        mo.hstack([monthly_created_plot,monthly_created],justify="start")
+        ])
+    return
+
+
+@app.cell
+def _(
+    checkbox_filter_by_updated,
+    date_updated_end,
+    date_updated_start,
+    dropdown_resolvedby_select,
+    max_updated,
+    min_updated,
+    mo,
+):
+
+    mo.vstack([
+        mo.md("~~~~~~~~~~"),
+        mo.hstack([
+            mo.md("### Monthly Resolved Ticket Count"),
+            mo.md(f"Earliest Available Updated: {min_updated}, Latest Available Updated: {max_updated}"),
+        ]),
+        mo.hstack([
+            dropdown_resolvedby_select,
+            checkbox_filter_by_updated,
+            date_updated_start,
+            date_updated_end,
+        ]),
+    ])
+    return
+
+
+@app.cell
+def _(
+    checkbox_filter_by_updated,
+    date_updated_end,
+    date_updated_start,
+    datetime,
+    df,
+    dropdown_resolvedby_select,
     time,
 ):
     # Monthly resolved
-    # If assignee filter in sidebar has assignee selected, filter ResolvedBY
-    # data by that assignee, otherwise show all records (--).
-    if assignee_select.value is None:
-        if filter_by_created.value:
+
+    if dropdown_resolvedby_select.value is None:
+        if checkbox_filter_by_updated.value:
             resolved_df = df[
                 (
                     df["Updated"]
-                    >= datetime.combine(filter_create_start_date.value, time.min)
+                    >= datetime.combine(date_updated_start.value, time.min)
                 )
                 & (
                     df["Updated"]
-                    <= datetime.combine(filter_create_end_date.value, time.max)
+                    <= datetime.combine(date_updated_end.value, time.max)
                 )
             ]
         else:
             resolved_df = df
     else:
-        if filter_by_created.value:
+        if checkbox_filter_by_updated.value:
             resolved_df = df[
-                (df["ResolvedBy"] == assignee_select.value)
+                (df["ResolvedBy"] == dropdown_resolvedby_select.value)
                 & (
                     df["Updated"]
-                    >= datetime.combine(filter_create_start_date.value, time.min)
+                    >= datetime.combine(date_updated_start.value, time.min)
                 )
                 & (
                     df["Updated"]
-                    <= datetime.combine(filter_create_end_date.value, time.max)
+                    <= datetime.combine(date_updated_end.value, time.max)
                 )
             ]
         else:
-            resolved_df = df[df["ResolvedBy"] == assignee_select.value]
-
+            resolved_df = df[df["ResolvedBy"] == dropdown_resolvedby_select.value]
     return (resolved_df,)
 
 
 @app.cell
-def _(assignee_select, mo, resolved_df):
-    # using assignee values to pull from ResolvedBy col
+def _(dropdown_resolvedby_select, mo, resolved_df):
     monthly_resolved = resolved_df.groupby(resolved_df["Updated"].dt.to_period('M')).size()
     mo.stop(monthly_resolved.empty)
     monthly_resolved
-    if assignee_select.value is None:
-        monthly_created_plot_title = "Tickets Resolved Per Month (All)"
+    if dropdown_resolvedby_select.value is None:
+        monthly_resolved_plot_title = "Tickets Resolved Per Month (All)"
     else:
-        monthly_created_plot_title = f"Tickets Resolved Per Month ({assignee_select.value})"
-    monthly_resolved_plot = monthly_resolved.plot(title=monthly_created_plot_title, kind="bar", grid=True, xlabel="Year-Month", ylabel="Count")
-    monthly_created_plot_note = mo.md("#### Note: Resolved by Months uses the Created Filter Options for date range selection, but derives ticket counts via the Updated column assuming the ticket was resolved during the last update.")
-    mo.vstack(
-        [
-            monthly_created_plot_note,
-            mo.hstack([monthly_resolved_plot,monthly_resolved],justify="start")
-        ])
+        monthly_resolved_plot_title = f"Tickets Resolved Per Month ({dropdown_resolvedby_select.value})"
+    monthly_resolved_plot = monthly_resolved.plot(title=monthly_resolved_plot_title, kind="bar", grid=True, xlabel="Year-Month", ylabel="Count")
 
+    mo.hstack([monthly_resolved_plot,monthly_resolved],justify="start")
     return
 
 
