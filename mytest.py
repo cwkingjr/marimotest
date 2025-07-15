@@ -203,7 +203,7 @@ def _(
 def _(filtered_df, mo, radiogroup):
     # Determine how to show the data based upon the built-in marimo views available.
     if radiogroup.value == "Table":
-        showme = filtered_df
+        showme = mo.ui.table(filtered_df)
     elif radiogroup.value == "Transformer":
         showme = mo.ui.dataframe(filtered_df)
     elif radiogroup.value == "Explorer":
