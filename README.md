@@ -116,3 +116,13 @@ uv run marimo edit ./mytest.py -- --infile ./fake-data-3000-rows.csv
 This will open you web browser to a local file and start showing the data. Meanwhile, the Terminal will be blocked. When you are ready to stop using the app, go to the terminal and hit Control-C to kill the uv marimo process. Then just close your browser tab.
 
 Let me know if any of these instructions don't make sense or are wrong.
+
+## Getting Repo Updates
+
+Developers will push changes to a feature branch within the GitHub repository, review the code, and merge good code into the main branch, which is what you got when you ran the git clone command. Once you have run the git clone command, you will have the current code at that time, but will have to pull down any updates.
+
+To get project code updates from the main branch, run this command from within the marimotest directory.
+
+```
+git pull
+```
