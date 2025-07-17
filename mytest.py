@@ -11,7 +11,8 @@ def _():
     from datetime import datetime, date, time
     from dateutil.relativedelta import relativedelta
     import altair as alt
-    return date, datetime, mo, pd, relativedelta, time
+    import duckdb
+    return date, datetime, duckdb, mo, pd, relativedelta, time
 
 
 @app.cell
@@ -207,13 +208,13 @@ def _(
 
 
 @app.cell
-def _(filtered_df, mo, radio_data_viewer_choice, radiogroup):
+def _(filtered_df, mo, radio_data_viewer_choice):
     # Determine how to show the data based upon the built-in marimo views available.
     if radio_data_viewer_choice.value == "Table":
         viewer = mo.ui.table(filtered_df)
-    elif radiogroup.value == "Transformer":
+    elif radio_data_viewer_choice.value == "Transformer":
         viewer = mo.ui.dataframe(filtered_df)
-    elif radiogroup.value == "Explorer":
+    elif radio_data_viewer_choice.value == "Explorer":
         viewer = mo.ui.data_explorer(filtered_df)
     return (viewer,)
 
@@ -417,6 +418,25 @@ def _(dropdown_resolvedby_select, mo, resolved_df):
     monthly_resolved_plot = monthly_resolved.plot(title=monthly_resolved_plot_title, kind="bar", grid=True, xlabel="Year-Month", ylabel="Count")
 
     mo.hstack([monthly_resolved_plot,monthly_resolved],justify="start")
+    return
+
+
+@app.cell
+def _(duckdb, filtered_df, mo):
+    # let's try a pivot
+    # using this approach so that we can register the update dependency outside
+    # of the sql statement so that the ui updates when the dependency changes.
+    pivot_query = "pivot tickets on split_part(Assignee, '@', 1) using count(*) group by Status;"
+    with duckdb.connect() as conn:
+        data = filtered_df
+        conn.register("tickets", data)
+        result_df = conn.execute(pivot_query).fetch_df()
+        pivot_df = result_df.copy()
+    mo.vstack([
+        mo.md("### Status Counts by Assignee Using Filter Options Selections"),
+        mo.ui.table(pivot_df)
+    ])
+
     return
 
 
