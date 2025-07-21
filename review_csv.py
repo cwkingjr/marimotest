@@ -9,7 +9,9 @@ def _():
     import marimo as mo
     import pandas as pd
 
-    df = pd.read_csv("fake-data-3000-rows.csv")
+    params = mo.cli_args()
+    infile = params["infile"]
+    df = pd.read_csv(infile)
     return (df,)
 
 
