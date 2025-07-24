@@ -104,7 +104,10 @@ In the marimotest directory, run the project in either run or edit mode. I'd rec
 Run
 
 ```
+uv run marimo run ./sim_analysis.py -- --infile ./fake-data-3000-rows.csv
+uv run marimo run ./sim_analysis.py -- --infile ./prod_data.csv
 uv run marimo run ./mytest.py -- --infile ./fake-data-3000-rows.csv
+uv run marimo run ./review_csv.py -- --infile ./fake-data-3000-row.csv
 ```
 
 Edit
