@@ -107,7 +107,7 @@ Run
 uv run marimo run ./sim_analysis.py -- --infile ./fake-data-3000-rows.csv
 uv run marimo run ./sim_analysis.py -- --infile ./prod_data.csv
 uv run marimo run ./mytest.py -- --infile ./fake-data-3000-rows.csv
-uv run marimo run ./review_csv.py -- --infile ./fake-data-3000-row.csv
+uv run marimo run ./review_any_csv.py -- --infile ./fake-data-3000-row.csv
 ```
 
 Edit
