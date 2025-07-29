@@ -46,6 +46,20 @@ def _():
         "ResolvedByIdentity",
         "Status",
     ]
+    return (REQUIRED_FIELDS,)
+
+
+@app.cell
+def _(REQUIRED_FIELDS, df):
+    # make sure we have all required fields before proceeding
+    missing_fields = set()
+
+    for required_field in REQUIRED_FIELDS:
+        if not required_field in df.columns:
+            missing_fields.add(required_field)
+
+    if len(missing_fields):    
+        raise ValueError("missing_fields:" + ",".join(missing_fields))
     return
 
 
