@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.14.12"
+__generated_with = "0.14.13"
 app = marimo.App(width="full", app_title="SIM Ticket Explorer")
 
 
@@ -82,15 +82,22 @@ def _(df, pd):
             no_string = one_col.replace("(string)", "")
             rename_df_col_in_place(df, one_col, no_string)
 
-
-    # This is the format I've seen so if this isn't correct, feel free to change it
-    INPUT_DATE_FORMAT = "%m/%d/%y %H:%M"
+    # Date column processing
+    INPUT_DATE_FORMAT_SEEN_SHORT = "%m/%d/%y %H:%M"  # "12/29/24 14:58"
+    INPUT_DATE_FORMAT_SEEN_LONG = "%Y-%m-%dT%H:%M:%S.%fZ"  # "2025-07-18T14:42:21.193Z"
 
     # if the dataframe doesn't pick up the date columns we need as datatimes, try to 
     # change the date columns from strings to datetimes so we can use the datetime methods on them
     if not str(df.dtypes["CreateDate"]).startswith("datetime"):
-        df["CreateDate"] = pd.to_datetime(df.CreateDate, format=INPUT_DATE_FORMAT)
-        df["LastUpdatedDate"] = pd.to_datetime(df.LastUpdatedDate, format=INPUT_DATE_FORMAT)
+        try:
+            df["CreateDate"] = pd.to_datetime(df.CreateDate, format=INPUT_DATE_FORMAT_SEEN_LONG)
+            df["LastUpdatedDate"] = pd.to_datetime(df.LastUpdatedDate, format=INPUT_DATE_FORMAT_SEEN_LONG)
+        except ValueError:
+            try:
+                df["CreateDate"] = pd.to_datetime(df.CreateDate, format=INPUT_DATE_FORMAT_SEEN_SHORT)
+                df["LastUpdatedDate"] = pd.to_datetime(df.LastUpdatedDate, format=INPUT_DATE_FORMAT_SEEN_SHORT)
+            except ValueError as e:
+                print("ERROR: Could not convert date columns to datetime using configured date formats. Please copy error text and provide to developer.")
 
     # add derived columns
     df["CreateUpdateDelta"] = df["LastUpdatedDate"] - df["CreateDate"]
@@ -252,7 +259,7 @@ def _(
 def _(filtered_df, mo, radio_data_viewer_choice):
     # Determine how to show the data based upon the built-in marimo views available.
     if radio_data_viewer_choice.value == "Table":
-        viewer = mo.ui.table(filtered_df)
+        viewer = mo.ui.table(data=filtered_df, label="Tickets", max_columns=None)
     elif radio_data_viewer_choice.value == "Transformer":
         viewer = mo.ui.dataframe(filtered_df)
     elif radio_data_viewer_choice.value == "Explorer":
