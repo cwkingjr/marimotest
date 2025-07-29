@@ -12,7 +12,6 @@ def _():
     from dateutil.relativedelta import relativedelta
     import altair as alt
     import duckdb
-
     return date, datetime, duckdb, mo, pd, relativedelta, time
 
 
@@ -21,27 +20,54 @@ def _(mo, pd):
     # load the data file
     params = mo.cli_args()
     infile = params["infile"]
-    df = pd.read_csv(infile)
 
-    # TODO confirm that the infile has the correct schema or notify user of what is expected and quit processing
-    # https://pandera.readthedocs.io/en/stable/dataframe_schemas.html
-
-    # TODO determine if we will accept either csv or xlsx and if they will have the same schemas
-    # assuming it would be fine to allow either so alternate fieldset can be consumed
+    if infile.endswith(".xlsx"):
+        df = pd.read_excel(infile)
+    elif infile.endswith(".csv"):
+        df = pd.read_csv(infile)
+    else:
+        raise ValueError(f"Input processing for file type of {infile} is not implimented yet.")
     return df, infile
+
+
+@app.cell
+def _():
+    # Instead of trying to restrict the input file to a particular schema, which is a problem because
+    # folks can select what fields they want when they generate the input file in another system,
+    # here we will just list the fields that are required for processing later in this notebook.
+    # So, if you modify this notebook to add functionality, it's on you to ensure your field
+    # requirements are included here.
+
+    # Fields/columns used for processing in subsequent cells
+    REQUIRED_FIELDS=[
+        "AssigneeIdentity",
+        "CreateDate",
+        "LastUpdatedDate",
+        "ResolvedByIdentity",
+        "Status",
+    ]
+    return
 
 
 @app.cell
 def _(df, pd):
     # clean up the data before we use it
 
-    # rename the columns to make them easier to see in tables and graphs
-    df.rename(
-        columns={
-            "tpa_from (string)": "tpa_from",
-        },
-        inplace=True,
-    )
+    def rename_df_col_in_place(dataframe, from_name, to_name):
+        dataframe.rename(
+            columns={
+                from_name: to_name.strip(),
+            },
+            inplace=True,
+        )
+
+    all_columns = df.columns
+
+    for one_col in all_columns:
+        if "(string)" in one_col:
+            no_string = one_col.replace("(string)", "")
+            rename_df_col_in_place(df, one_col, no_string)
+
 
     # This is the format I've seen so if this isn't correct, feel free to change it
     INPUT_DATE_FORMAT = "%m/%d/%y %H:%M"
@@ -53,7 +79,7 @@ def _(df, pd):
         df["LastUpdatedDate"] = pd.to_datetime(df.LastUpdatedDate, format=INPUT_DATE_FORMAT)
 
     # add derived columns
-    df["CreatedUpdateDelta"] = df["LastUpdatedDate"] - df["CreateDate"]
+    df["CreateUpdateDelta"] = df["LastUpdatedDate"] - df["CreateDate"]
     return
 
 
