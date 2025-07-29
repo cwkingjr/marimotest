@@ -2,6 +2,10 @@
 
 Everything here assumes you are working inside a Powershell terminal. Right click the Start Icon and choose Terminal.
 
+WARNING: At some point I intend to reword this to expect the user to be using the Git Bash terminal, but I have not confirmed that everything here (especially the uv install) will work in Git Bash. Git Bash (to me), is a far superior terminal for normal unix stuff as it adds numerous Unix commands that are super useful.
+
+For Git Bash training/info, see this repo: https://github.com/cwkingjr/unix-command-intro-for-windows-folks.
+
 Note, you can cd up one dir with `cd ..`, up two with `cd ../..`, or down more than one with e.g., `cd dir_one/dir_two`.
 
 ### Install Git
@@ -69,7 +73,7 @@ ls
 
 ### Sync dependencies using uv
 
-Inside the marimotest directory, run `uv sync` to pull down all the python dependencies for Marimo and the mytest.py Marimo Notebook. This will take a while the first time so don't be worried, just let it run and watch the status bars as it pulls down Python packages.
+Inside the marimotest directory, run `uv sync` to pull down all the python dependencies for Marimo and the sim_analysis.py Marimo Notebook. This will take a while the first time so don't be worried, just let it run and watch the status bars as it pulls down Python packages.
 
 ```
 uv sync
@@ -82,7 +86,7 @@ Marimo offers edit and run modes. Run is for finished projects and edit is for w
 From inside the marimotest dir, run:
 
 ```
-uv run marimo edit ./mytest.py -- --infile ./fake-data-3000-rows.csv
+uv run marimo edit ./sim_analysis.py -- --infile ./fake-data-3000-rows.csv
 ```
 
 To explain the above, I will break down some parts. We're using uv to manage Python, dependencies, and virtual environments here. Instead of worrying about learning all about Python installation and packaging and setting up virtual environments, uv will use the info in the local repo's files to download and install the version of python needed, all python dependency packages needed by this project, installed within a virtual environment inside this project (under the dir .venv) so these dependencies don't interfere with any other project's dependency needs/versions. Because of that, we launch projects using uv also, but using a different subcommand (run instead of sync).
@@ -91,7 +95,7 @@ Here is what the parts do of that long command line invocation do:
 
 `uv run marimo` launches marimo using the local python virtual environment.
 
-`marimo run ./mytest.py` uses the marimo `run` subcommand to run the `./mytest.py` Python file.
+`marimo run ./sim_analysis.py` uses the marimo `run` subcommand to run the `./sim_analysis.py` Python file.
 
 `--` tells `uv run` that any arguments after this are not for `uv run` and need to get passed on to `marimo run` for processing.
 
@@ -106,14 +110,13 @@ Run
 ```
 uv run marimo run ./sim_analysis.py -- --infile ./fake-data-3000-rows.csv
 uv run marimo run ./sim_analysis.py -- --infile ./prod_data.csv
-uv run marimo run ./mytest.py -- --infile ./fake-data-3000-rows.csv
 uv run marimo run ./review_any_csv.py -- --infile ./fake-data-3000-row.csv
 ```
 
 Edit
 
 ```
-uv run marimo edit ./mytest.py -- --infile ./fake-data-3000-rows.csv
+uv run marimo edit ./sim_analysis.py -- --infile ./fake-data-3000-rows.csv
 ```
 
 This will open you web browser to a local file and start showing the data. Meanwhile, the Terminal will be blocked. When you are ready to stop using the app, go to the terminal and hit Control-C to kill the uv marimo process. Then just close your browser tab.
@@ -129,3 +132,5 @@ To get project code updates from the main branch, run this command from within t
 ```
 git pull
 ```
+
+To make things easy on yourself and save a bunch of typing, see the alias command info in the unix repo mentioned above.
