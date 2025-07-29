@@ -511,15 +511,50 @@ def _(duckdb, filtered_df, mo):
         conn.register("tickets", data)
         result_df = conn.execute(pivot_query).fetch_df()
         pivot_df = result_df.copy()
+
     mo.vstack(
         [
             mo.md(
-                "### Status Counts by AssigneeIdentity Using Filter Options Selections"
+                "### Status Counts by AssigneeIdentity -- Using Filter Options Selections"
             ),
             mo.ui.table(pivot_df),
         ]
     )
 
+    return
+
+
+@app.cell
+def _(df, duckdb, filtered_df, mo):
+    # Pivot AssignedFolderLabel by Status
+
+    def get_assigned_folder_label_by_status_df(dataframe):
+        pivot_query = "pivot tickets on AssignedFolderLabel using count(*) group by Status;"
+        with duckdb.connect() as conn:
+            data = dataframe
+            conn.register("tickets", data)
+            result_df = conn.execute(pivot_query).fetch_df()
+            return result_df.copy()
+    
+    mo.stop(not "AssignedFolderLabel" in df.columns)
+
+
+    afl_by_status_df = get_assigned_folder_label_by_status_df(filtered_df)
+    return (afl_by_status_df,)
+
+
+@app.cell
+def _(afl_by_status_df, df, mo):
+    mo.stop(not "AssignedFolderLabel" in df.columns, mo.md("Can't generate pivot on AssignedFolderLabel by Status because AssignedFolderLabel wasn't found."))
+
+    mo.vstack(
+        [
+            mo.md(
+                "### Status Counts by AssignedFolderLabel -- Using Filter Options Selections"
+            ),
+            mo.ui.table(data=afl_by_status_df, max_columns=None),
+        ]
+    )
     return
 
 
