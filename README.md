@@ -86,7 +86,7 @@ Marimo offers edit and run modes. Run is for finished projects and edit is for w
 From inside the marimotest dir, run:
 
 ```
-uv run marimo edit ./sim_analysis.py -- --infile ./fake-data-3000-rows.csv
+uv run marimo edit ./sim_analysis.py -- --infile ./fake-data-5000-rows.csv
 ```
 
 To explain the above, I will break down some parts. We're using uv to manage Python, dependencies, and virtual environments here. Instead of worrying about learning all about Python installation and packaging and setting up virtual environments, uv will use the info in the local repo's files to download and install the version of python needed, all python dependency packages needed by this project, installed within a virtual environment inside this project (under the dir .venv) so these dependencies don't interfere with any other project's dependency needs/versions. Because of that, we launch projects using uv also, but using a different subcommand (run instead of sync).
@@ -99,24 +99,24 @@ Here is what the parts do of that long command line invocation do:
 
 `--` tells `uv run` that any arguments after this are not for `uv run` and need to get passed on to `marimo run` for processing.
 
-`--infile ./fake-data-3000-rows.csv` becomes an argument passed into the Python environment that is running the mytest.py file, where I use code to find out what the file path passed in was and display that in the left sidebar and use that path to load the CSV data.
+`--infile ./fake-data-5000-rows.csv` becomes an argument passed into the Python environment that is running the mytest.py file, where I use code to find out what the file path passed in was and display that in the left sidebar and use that path to load the CSV data.
 
-### Run via uv run in Marimo run mode
+### Run via uv run in Marimo `run` or `edit` mode
 
-In the marimotest directory, run the project in either run or edit mode. I'd recommend trying both to see what is there.
+In the marimotest directory, run the project in either `run` or `edit` mode. I'd recommend trying both to see what is there.
 
-Run
+Run (`marimo run`)
 
 ```
-uv run marimo run ./sim_analysis.py -- --infile ./fake-data-3000-rows.csv
+uv run marimo run ./sim_analysis.py -- --infile ./fake-data-5000-rows.csv
 uv run marimo run ./sim_analysis.py -- --infile ./prod_data.csv
-uv run marimo run ./review_any_csv.py -- --infile ./fake-data-3000-row.csv
+uv run marimo run ./review_any_csv.py -- --infile ./fake-data-5000-rows.csv
 ```
 
-Edit
+Edit (`marimo edit`)
 
 ```
-uv run marimo edit ./sim_analysis.py -- --infile ./fake-data-3000-rows.csv
+uv run marimo edit ./sim_analysis.py -- --infile ./fake-data-5000-rows.csv
 ```
 
 This will open you web browser to a local file and start showing the data. Meanwhile, the Terminal will be blocked. When you are ready to stop using the app, go to the terminal and hit Control-C to kill the uv marimo process. Then just close your browser tab.
@@ -134,3 +134,17 @@ git pull
 ```
 
 To make things easy on yourself and save a bunch of typing, see the alias command info in the unix repo mentioned above.
+
+## Using the Fake Data Generator
+
+The fake data generator takes one argument, which is the number of rows you want to generate. Below, it's passed 100000, and the output from stdout is redirected into a file for use later.
+
+```
+uv run ./generate_fake_data.py 100000 > fake-data-100000-rows.csv
+```
+
+If you do not pass it an argument, it will generate 1 row and display that vertically just to show you the format of generated data for each column. So, with no argument, just let it stream to stdout.
+
+```
+uv run ./generate_fake_data.py
+```
