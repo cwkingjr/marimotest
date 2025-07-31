@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.14.13"
+__generated_with = "0.14.15"
 app = marimo.App(width="full", app_title="SIM Ticket Explorer")
 
 
@@ -10,9 +10,10 @@ def _():
     import pandas as pd
     from datetime import datetime, date, time
     from dateutil.relativedelta import relativedelta
+    import re
     import altair as alt
     import duckdb
-    return date, datetime, duckdb, mo, pd, relativedelta, time
+    return date, datetime, duckdb, mo, pd, re, relativedelta, time
 
 
 @app.cell
@@ -45,6 +46,7 @@ def _():
         "LastUpdatedDate",
         "ResolvedByIdentity",
         "Status",
+        "Title",
     ]
     return (REQUIRED_FIELDS,)
 
@@ -64,7 +66,49 @@ def _(REQUIRED_FIELDS, df):
 
 
 @app.cell
-def _(df, pd):
+def _(re):
+    # functions to extract state codes from title state codes or state names
+
+    from lookups.state_lookups import us_state_to_abbrev,abbrev_to_us_state
+
+    # grab these so we only read the keys once
+    state_names = us_state_to_abbrev.keys()
+
+    state_code_pattern = r"(?<=\[)[A-Z]{2}(?=\])" # looks for [WV] format but doesn't capture brackets
+
+    compiled_state_code_pattern = re.compile(state_code_pattern)
+
+    def get_state_code_from_title(title_content: str) -> str:
+        match = compiled_state_code_pattern.search(title_content)
+        if match:
+            two_chars = match.group()
+            if two_chars in abbrev_to_us_state:
+                return two_chars
+        else:
+            return ""
+
+    def get_state_name_from_title(title_content: str) -> str:
+        # really don't know how to make this more efficient, but here we are
+        for state_name in state_names:
+            if state_name.lower() in title_content.lower():
+                return state_name
+        return ""
+
+    def get_state_code_from_title_code_or_name(title_content: str) -> str:
+        if the_state_code:= get_state_code_from_title(title_content):
+            return the_state_code
+        elif the_state_name:= get_state_name_from_title(title_content):
+            cap_state_name = the_state_name.capitalize()
+            if cap_state_name in us_state_to_abbrev:
+                return us_state_to_abbrev[cap_state_name]
+            return ""
+        else:
+            return "" 
+    return (get_state_code_from_title_code_or_name,)
+
+
+@app.cell
+def _(df, get_state_code_from_title_code_or_name, pd):
     # clean up the data before we use it
 
     def rename_df_col_in_place(dataframe, from_name, to_name):
@@ -101,6 +145,7 @@ def _(df, pd):
 
     # add derived columns
     df["CreateUpdateDelta"] = df["LastUpdatedDate"] - df["CreateDate"]
+    df["TitleState"] = df["Title"].apply(get_state_code_from_title_code_or_name)
     return
 
 
@@ -535,7 +580,7 @@ def _(df, duckdb, filtered_df, mo):
             conn.register("tickets", data)
             result_df = conn.execute(pivot_query).fetch_df()
             return result_df.copy()
-    
+
     mo.stop(not "AssignedFolderLabel" in df.columns)
 
 
@@ -553,6 +598,40 @@ def _(afl_by_status_df, df, mo):
                 "### Status Counts by AssignedFolderLabel -- Using Filter Options Selections"
             ),
             mo.ui.table(data=afl_by_status_df, max_columns=None),
+        ]
+    )
+    return
+
+
+@app.cell
+def _(df, duckdb, filtered_df, mo):
+    # Pivot TitleState by Status
+
+    def get_title_state_by_status_df(dataframe):
+        pivot_query = "pivot tickets on Status using count(*) group by TitleState;"
+        with duckdb.connect() as conn:
+            data = dataframe
+            conn.register("tickets", data)
+            result_df = conn.execute(pivot_query).fetch_df()
+            return result_df.copy()
+
+    mo.stop(not "TitleState" in df.columns)
+
+
+    title_state_by_status_df = get_title_state_by_status_df(filtered_df)
+    return (title_state_by_status_df,)
+
+
+@app.cell
+def _(df, mo, title_state_by_status_df):
+    mo.stop(not "TitleState" in df.columns, mo.md("Can't generate pivot on Status by TitleState because TitleState wasn't found."))
+
+    mo.vstack(
+        [
+            mo.md(
+                "### TitleState Counts by Status -- Using Filter Options Selections"
+            ),
+            mo.ui.table(data=title_state_by_status_df, max_columns=None),
         ]
     )
     return
