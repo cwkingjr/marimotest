@@ -22,7 +22,7 @@ git version
 
 Run this command:
 
-`powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"`
+`powershell -ExecutionPolicy Bypass -c "irm https://github.com/astral-sh/uv/releases/download/0.8.3/uv-installer.ps1 | iex"`
 
 Verify uv is installed with:
 
