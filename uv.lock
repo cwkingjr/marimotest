@@ -127,8 +127,8 @@ wheels = [
 
 [[package]]
 name = "cwk-word-utils"
-version = "0.1.0"
-source = { git = "https://github.com/cwkingjr/cwk-word-utils.git?rev=main#64da7dbbd674c9a8ffae76f4c6d1c179a9c1b4e2" }
+version = "0.2.0"
+source = { git = "https://github.com/cwkingjr/cwk-word-utils.git?rev=main#4ac44fa890a8de15e8a09b99330bc44739dedc6d" }
 dependencies = [
     { name = "pandas" },
     { name = "pydantic" },

@@ -13,12 +13,12 @@ def _():
     import re
     import altair as alt
     import duckdb
-    from cwk_word_utils.sentiment import extract_sentiment_polarity
+    from cwk_word_utils.sentiment import get_sentiment_polarity
     return (
         date,
         datetime,
         duckdb,
-        extract_sentiment_polarity,
+        get_sentiment_polarity,
         mo,
         pd,
         re,
@@ -649,8 +649,8 @@ def _(df, mo, title_state_by_status_df):
 
 
 @app.cell
-def _(extract_sentiment_polarity, filtered_df):
-    filtered_df["sentiment"] = filtered_df["Description"].apply(extract_sentiment_polarity)
+def _(filtered_df, get_sentiment_polarity):
+    filtered_df["sentiment"] = filtered_df["Description"].apply(get_sentiment_polarity)
     filtered_df
     return
 
