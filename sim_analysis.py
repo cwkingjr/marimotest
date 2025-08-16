@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.14.15"
+__generated_with = "0.14.17"
 app = marimo.App(width="full", app_title="SIM Ticket Explorer")
 
 
@@ -13,7 +13,18 @@ def _():
     import re
     import altair as alt
     import duckdb
-    return date, datetime, duckdb, mo, pd, re, relativedelta, time
+    from cwk_word_utils.sentiment import extract_sentiment_polarity
+    return (
+        date,
+        datetime,
+        duckdb,
+        extract_sentiment_polarity,
+        mo,
+        pd,
+        re,
+        relativedelta,
+        time,
+    )
 
 
 @app.cell
@@ -634,6 +645,13 @@ def _(df, mo, title_state_by_status_df):
             mo.ui.table(data=title_state_by_status_df, max_columns=None),
         ]
     )
+    return
+
+
+@app.cell
+def _(extract_sentiment_polarity, filtered_df):
+    filtered_df["sentiment"] = filtered_df["Description"].apply(extract_sentiment_polarity)
+    filtered_df
     return
 
 

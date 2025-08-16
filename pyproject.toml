@@ -6,16 +6,17 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "altair>=5.5.0",
+    "cwk-word-utils @ git+https://github.com/cwkingjr/cwk-word-utils.git@main",
     "duckdb>=1.3.2",
-    "marimo>=0.14.15",
-    "matplotlib>=3.10.3",
+    "marimo>=0.14.17",
+    "matplotlib>=3.10.5",
     "numpy>=2.3.1",
     "openpyxl>=3.1.5",
     "pandas>=2.3.1",
-    "polars[pyarrow]>=1.31.0",
+    "polars[pyarrow]>=1.32.3",
     "pyarrow>=21.0.0",
     "pyplotlib>=0.0.56",
     "pytest>=8.4.1",
-    "ruff>=0.12.7",
+    "ruff>=0.12.9",
     "sqlglot>=27.0.0",
 ]
