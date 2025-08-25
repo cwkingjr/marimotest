@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.14.17"
+__generated_with = "0.15.0"
 app = marimo.App(width="full", app_title="SIM Ticket Explorer")
 
 
@@ -652,6 +652,34 @@ def _(df, mo, title_state_by_status_df):
 def _(filtered_df, get_sentiment_polarity):
     filtered_df["sentiment"] = filtered_df["Description"].apply(get_sentiment_polarity)
     filtered_df
+    return
+
+
+@app.cell
+def _(df):
+    from cwk_word_utils.word_count import get_word_count_counter
+
+    # get info for all rows
+    #joined_string = df['Description'].str.cat(sep=' ')
+
+    # get info for all rows where a specific column has a specific value
+    joined_string = df.loc[df["Priority"] == "Critical", "Description"].str.cat(sep=" ")
+
+    counts = get_word_count_counter(joined_string, return_most_common=20)
+    print(counts)
+    return (counts,)
+
+
+@app.cell
+def _(counts, pd):
+    most_used_words_df = pd.DataFrame(counts)
+    most_used_words_df
+    return
+
+
+@app.cell
+def _(df):
+    result = df.loc[df['Category'] == 'A', 'Value']
     return
 
 
