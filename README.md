@@ -2,69 +2,45 @@
 
 Everything here assumes you are working inside a Powershell terminal. Right click the Start Icon and choose Terminal.
 
-WARNING: At some point I intend to reword this to expect the user to be using the Git Bash terminal, but I have not confirmed that everything here (especially the uv install) will work in Git Bash. Git Bash (to me), is a far superior terminal for normal unix stuff as it adds numerous Unix commands that are super useful.
+If you are new to Bash/Unix/Linux, do yourself a favor and have a look here: https://github.com/cwkingjr/unix-command-intro-for-windows-folks.
 
-For Git Bash training/info, see this repo: https://github.com/cwkingjr/unix-command-intro-for-windows-folks.
+Install Git Bash and UV: https://github.com/cwkingjr/windows-install-gitbash-and-uv
 
-Note, you can cd up one dir with `cd ..`, up two with `cd ../..`, or down more than one with e.g., `cd dir_one/dir_two`.
-
-### Install Git
-
-https://www.youtube.com/watch?v=iYkLrXobBbA
-
-Verify git is with:
-
-```
-git version
-```
-
-### Install uv
-
-Run this command:
-
-`powershell -ExecutionPolicy Bypass -c "irm https://github.com/astral-sh/uv/releases/download/0.8.3/uv-installer.ps1 | iex"`
-
-Verify uv is installed with:
-
-```
-uv --version
-```
-
-### Create `dev` folder and change directory into it
+### Create `Dev` folder and change directory into it
 
 Run these commands:
 
 Check that you are in your home directory. Response to `pwd` (present working directory) should be "PS C:\Users\chuck>" but with your user name.
 
-```
+```text
 pwd
 ```
 
 Make the directory.
 
-```
-mkdir dev
+```text
+mkdir Dev
 ```
 
 List the directory.
 
-```
+```text
 ls
 ```
 
 Change directory into your new dev directory.
 
-```
-cd dev
+```text
+cd Dev
 ```
 
 ### Clone repository into `dev` directory
 
-In `dev` directory (check with `pwd`), run these commands:
+In `Dev` directory (check with `pwd`), run these commands:
 
 - Clone the marimotest repo from github into your local dev directory, cd into the marimotest directory (that the clone makes), and preview the directory using `ls`.
 
-```
+```text
 git clone https://github.com/cwkingjr/marimotest.git
 ls
 cd marimotest
@@ -75,7 +51,7 @@ ls
 
 Inside the marimotest directory, run `uv sync` to pull down all the python dependencies for Marimo and the sim_analysis.py Marimo Notebook. This will take a while the first time so don't be worried, just let it run and watch the status bars as it pulls down Python packages.
 
-```
+```text
 uv sync
 ```
 
@@ -85,7 +61,7 @@ Marimo offers edit and run modes. Run is for finished projects and edit is for w
 
 From inside the marimotest dir, run:
 
-```
+```text
 uv run marimo edit ./sim_analysis.py -- --infile ./fake-data-5000-rows.csv
 ```
 
@@ -107,15 +83,15 @@ In the marimotest directory, run the project in either `run` or `edit` mode. I'd
 
 Run (`marimo run`)
 
-```
+```text
 uv run marimo run ./sim_analysis.py -- --infile ./fake-data-5000-rows.csv
 uv run marimo run ./sim_analysis.py -- --infile ./prod_data.csv
-uv run marimo run ./review_any_csv.py -- --infile ./fake-data-5000-rows.csv
+uv run marimo run ./review_any_csv_or_xlsx.py -- --infile ./fake-data-5000-rows.csv
 ```
 
 Edit (`marimo edit`)
 
-```
+```text
 uv run marimo edit ./sim_analysis.py -- --infile ./fake-data-5000-rows.csv
 ```
 
@@ -129,7 +105,7 @@ Developers will push changes to a feature branch within the GitHub repository, r
 
 To get project code updates from the main branch, run this command from within the marimotest directory.
 
-```
+```text
 git pull
 ```
 
@@ -139,12 +115,12 @@ To make things easy on yourself and save a bunch of typing, see the alias comman
 
 The fake data generator takes one argument, which is the number of rows you want to generate. Below, it's passed 100000, and the output from stdout is redirected into a file for use later.
 
-```
+```text
 uv run ./generate_fake_data.py 100000 > fake-data-100000-rows.csv
 ```
 
 If you do not pass it an argument, it will generate 1 row and display that vertically just to show you the format of generated data for each column. So, with no argument, just let it stream to stdout.
 
-```
+```text
 uv run ./generate_fake_data.py
 ```

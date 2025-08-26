@@ -557,23 +557,31 @@ def _(dropdown_resolvedby_select, mo, resolved_df):
 
 
 @app.cell
-def _(duckdb, filtered_df, mo):
-    # let's try a pivot
-    # using this approach so that we can register the update dependency outside
-    # of the sql statement so that the ui updates when the dependency changes.
-    pivot_query = "pivot tickets on AssigneeIdentity using count(*) group by Status;"
-    with duckdb.connect() as conn:
-        data = filtered_df
-        conn.register("tickets", data)
-        result_df = conn.execute(pivot_query).fetch_df()
-        pivot_df = result_df.copy()
+def _(df, duckdb, filtered_df, mo):
+    # Ticket Count by Assignee and Status
+
+    def get_status_counts_by_assignee_df(dataframe):
+        # let's try a pivot
+        # using this approach so that we can register the update dependency outside
+        # of the sql statement so that the ui updates when the dependency changes.
+        pivot_query = "pivot tickets on AssigneeIdentity using count(*) group by Status;"
+        with duckdb.connect() as conn:
+            data = filtered_df
+            conn.register("tickets", data)
+            result_df = conn.execute(pivot_query).fetch_df()
+            return result_df.copy()
+
+    mo.stop(not "AssigneeIdentity" in df.columns or not "Status" in df.columns)
+
+
+    status_counts_by_assignee_df = get_status_counts_by_assignee_df(filtered_df)
 
     mo.vstack(
         [
             mo.md(
                 "### Status Counts by AssigneeIdentity -- Using Filter Options Selections"
             ),
-            mo.ui.table(pivot_df),
+            mo.ui.table(status_counts_by_assignee_df),
         ]
     )
 
@@ -649,37 +657,62 @@ def _(df, mo, title_state_by_status_df):
 
 
 @app.cell
-def _(filtered_df, get_sentiment_polarity):
-    filtered_df["sentiment"] = filtered_df["Description"].apply(get_sentiment_polarity)
-    filtered_df
+def _(df, get_sentiment_polarity, mo):
+    df["DescSentimentPolarity"] = df["Description"].apply(get_sentiment_polarity)
+
+    mo.vstack(
+        [
+            mo.md(
+                "### Description Sentiment Polarity (-1 Bad to 1 Good) -- Not Filtered"
+            ),
+            mo.ui.table(data=df, max_columns=None),
+        ]
+    )
+
     return
 
 
 @app.cell
-def _(df):
+def _(df, pd):
     from cwk_word_utils.word_count import get_word_count_counter
 
     # get info for all rows
-    #joined_string = df['Description'].str.cat(sep=' ')
+    joined_string_all = df['Description'].str.cat(sep=' ')
 
     # get info for all rows where a specific column has a specific value
-    joined_string = df.loc[df["Priority"] == "Critical", "Description"].str.cat(sep=" ")
+    joined_string_priority_critical = df.loc[df["Priority"] == "Critical", "Description"].str.cat(sep=" ")
 
-    counts = get_word_count_counter(joined_string, return_most_common=20)
-    print(counts)
-    return (counts,)
+    joined_string_all_counts = get_word_count_counter(joined_string_all, return_most_common=20)
+    most_common_20_all_df = pd.DataFrame(joined_string_all_counts)
+
+    joined_string_priority_critical_counts = get_word_count_counter(joined_string_priority_critical, return_most_common=20)
+    most_common_20_priority_critical_df = pd.DataFrame(joined_string_priority_critical_counts)
+    return most_common_20_all_df, most_common_20_priority_critical_df
 
 
 @app.cell
-def _(counts, pd):
-    most_used_words_df = pd.DataFrame(counts)
-    most_used_words_df
+def _(mo, most_common_20_all_df):
+    mo.vstack(
+        [
+            mo.md(
+                "### Most Common (Non-StopWord) Words in Description Column -- Not Filtered"
+            ),
+            mo.ui.table(data=most_common_20_all_df, max_columns=None),
+        ]
+    )
     return
 
 
 @app.cell
-def _(df):
-    result = df.loc[df['Category'] == 'A', 'Value']
+def _(mo, most_common_20_priority_critical_df):
+    mo.vstack(
+        [
+            mo.md(
+                "### Most Common (Non-StopWord) Words in Description Column -- Where Priority == Critial"
+            ),
+            mo.ui.table(data=most_common_20_priority_critical_df, max_columns=None),
+        ]
+    )
     return
 
 
