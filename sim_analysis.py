@@ -721,34 +721,30 @@ def _(mo, most_common_20_priority_critical_df):
 
 
 @app.cell
-def _(joined_string_priority_critical_counts):
+def _(joined_string_priority_critical_counts, mo):
     # Here's how you can grab those words for use in a term tagger block.
     # You'll have to copy the line, then remove the outside single quote chars, then remove any words you don't want to use.
 
     # using json in order to get the string elements quoted with double quotes as python uses single quotes
     import json
     my_words = [x for (x,_) in joined_string_priority_critical_counts]
-    "terms = " + json.dumps(my_words)
+    output_string = "terms = " + json.dumps(my_words)
+    mo.vstack([mo.md("### Copyable string of 'joined_string_priority_critical_counts'"),output_string])
     return
 
 
 @app.cell
-def _(df):
-    # Count the occurrences of each unique value in the a column
+def _(df, mo):
     tag_counts = df['Tags'].value_counts()
-
-
-    tag_counts
+    mo.vstack([mo.md("### Tag Count - Not Filtered"),tag_counts])
     return
 
 
 @app.cell
 def _(df, mo):
     mo.stop(not "description_tags" in df.columns, mo.md("Can't count 'description_tags' because the column wasn't found."))
-
-    # Count the occurrences of each unique value in the a column
     desc_tag_counts = df['description_tags'].value_counts()
-    desc_tag_counts
+    mo.vstack([mo.md("### Description Tags Count - Not Filtered"),desc_tag_counts])
     return
 
 
