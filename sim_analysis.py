@@ -732,5 +732,25 @@ def _(joined_string_priority_critical_counts):
     return
 
 
+@app.cell
+def _(df):
+    # Count the occurrences of each unique value in the a column
+    tag_counts = df['Tags'].value_counts()
+
+
+    tag_counts
+    return
+
+
+@app.cell
+def _(df, mo):
+    mo.stop(not "description_tags" in df.columns, mo.md("Can't count 'description_tags' because the column wasn't found."))
+
+    # Count the occurrences of each unique value in the a column
+    desc_tag_counts = df['description_tags'].value_counts()
+    desc_tag_counts
+    return
+
+
 if __name__ == "__main__":
     app.run()

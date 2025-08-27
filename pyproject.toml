@@ -1,6 +1,6 @@
 [project]
 name = "marimotest"
-version = "0.5.0"
+version = "0.6.0"
 description = "Exploring Marimo to review sim tickets"
 readme = "README.md"
 requires-python = ">=3.13"
