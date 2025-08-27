@@ -687,7 +687,11 @@ def _(df, pd):
 
     joined_string_priority_critical_counts = get_word_count_counter(joined_string_priority_critical, return_most_common=20)
     most_common_20_priority_critical_df = pd.DataFrame(joined_string_priority_critical_counts)
-    return most_common_20_all_df, most_common_20_priority_critical_df
+    return (
+        joined_string_priority_critical_counts,
+        most_common_20_all_df,
+        most_common_20_priority_critical_df,
+    )
 
 
 @app.cell
@@ -713,6 +717,18 @@ def _(mo, most_common_20_priority_critical_df):
             mo.ui.table(data=most_common_20_priority_critical_df, max_columns=None),
         ]
     )
+    return
+
+
+@app.cell
+def _(joined_string_priority_critical_counts):
+    # Here's how you can grab those words for use in a term tagger block.
+    # You'll have to copy the line, then remove the outside single quote chars, then remove any words you don't want to use.
+
+    # using json in order to get the string elements quoted with double quotes as python uses single quotes
+    import json
+    my_words = [x for (x,_) in joined_string_priority_critical_counts]
+    "terms = " + json.dumps(my_words)
     return
 
 
